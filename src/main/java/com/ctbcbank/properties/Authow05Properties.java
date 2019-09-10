@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 @PropertySource(value = { "classpath:authow05.properties" })
 public class Authow05Properties{
 	private String remotePath;
-	private String localPath;
+	private String downloadPath;
+	private String backupPath;
 	private String checkSql;
 	private String checkworkdaySql;
 	private String updateSql;
@@ -22,11 +23,17 @@ public class Authow05Properties{
 	public void setRemotePath(String remotePath) {
 		this.remotePath = remotePath;
 	}
-	public String getLocalPath() {
-		return localPath;
+	public String getDownloadPath() {
+		return downloadPath;
 	}
-	public void setLocalPath(String localPath) {
-		this.localPath = localPath;
+	public void setDownloadPath(String downloadPath) {
+		this.downloadPath = downloadPath;
+	}
+	public String getBackupPath() {
+		return backupPath;
+	}
+	public void setBackupPath(String backupPath) {
+		this.backupPath = backupPath;
 	}
 	public String getCheckSql() {
 		return checkSql;

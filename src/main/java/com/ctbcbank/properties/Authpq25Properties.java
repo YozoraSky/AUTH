@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 @PropertySource(value = { "classpath:authpq25.properties" })
 public class Authpq25Properties {
 	private String remotePath;
-	private String localPath;
+	private String downloadPath;
+	private String backupPath;
 	private String insertSql;
 	private String statusSql;
 	private String checkworkdaySql;
@@ -20,11 +21,17 @@ public class Authpq25Properties {
 	public void setRemotePath(String remotePath) {
 		this.remotePath = remotePath;
 	}
-	public String getLocalPath() {
-		return localPath;
+	public String getDownloadPath() {
+		return downloadPath;
 	}
-	public void setLocalPath(String localPath) {
-		this.localPath = localPath;
+	public void setDownloadPath(String downloadPath) {
+		this.downloadPath = downloadPath;
+	}
+	public String getBackupPath() {
+		return backupPath;
+	}
+	public void setBackupPath(String backupPath) {
+		this.backupPath = backupPath;
 	}
 	public String getInsertSql() {
 		return insertSql;

@@ -50,7 +50,7 @@ public class Authpq26 extends Auth{
 //					mode = 1 當日須轉入, mode = 0 當日不須轉入
 					if((Short)map.get("Mode") == 1) {
 						logger.info("工作日---Authpq26授權批次");
-						execute(ftp, authpq26Properties.getRemotePath(),authpq26Properties.getLocalPath(), authProperties.getDeCompressKey());
+						execute(ftp, authpq26Properties.getRemotePath(), authpq26Properties.getDownloadPath(), authpq26Properties.getBackupPath(), authProperties.getDeCompressKey());
 						break;
 					}
 					else {
@@ -64,7 +64,7 @@ public class Authpq26 extends Auth{
 				done = true;
 				if(!getWeekDays(today).equals("星期六") && !getWeekDays(today).equals("星期日")) {
 					logger.info("未找到類別0，按照預設 (星期一~星期五) 日期執行Authpq26授權批次");
-					execute(ftp, authpq26Properties.getRemotePath(),authpq26Properties.getLocalPath(), authProperties.getDeCompressKey());
+					execute(ftp, authpq26Properties.getRemotePath(), authpq26Properties.getDownloadPath(), authpq26Properties.getBackupPath(), authProperties.getDeCompressKey());
 				}
 				else {
 					logger.info("未找到類別0，且不屬於預設 (星期一~星期五) 日期");
