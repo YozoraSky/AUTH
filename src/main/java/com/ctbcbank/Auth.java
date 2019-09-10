@@ -3,12 +3,14 @@ package com.ctbcbank;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.channels.FileChannel;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -74,30 +76,34 @@ public abstract class Auth {
 			logger.info(fileName + ".exe excute fail : " + i);
 	}
 
-	public void execute(FTPTools ftp, String remotePath, String directory, String deCompressKey) throws Exception {
-		File file = new File(directory);
-		if(!file.exists())
-			file.mkdirs();
+	public void execute(FTPTools ftp, String remotePath, String downloadPath, String backupPath, String deCompressKey) throws Exception {
+		File downloadPathFile = new File(downloadPath);
+		File backupPathFile = new File(backupPath);
+		if(!downloadPathFile.exists())
+			downloadPathFile.mkdirs();
+		if(!backupPathFile.exists())
+			backupPathFile.mkdirs();
 		String fileName = getFileName();
 		logger.info(ftp.login());
-		ftp.downloadFile(remotePath, fileName + ".EXE", directory + fileName + ".EXE");
-		File filepath = new File(directory + fileName + ".EXE");
+		ftp.downloadFile(remotePath, fileName + ".EXE", downloadPath + fileName + ".EXE");
+		copyFile(new FileInputStream(downloadPath + fileName + ".EXE"), new FileOutputStream(backupPath + fileName + ".EXE"));
+		File filepath = new File(downloadPath + fileName + ".EXE");
 		if (filepath.exists()) {
-			logger.info(String.valueOf(filepath.setExecutable(true, false)));
-			logger.info(String.valueOf(filepath.setWritable(true, false)));
-			logger.info(String.valueOf(filepath.setReadable(true, false)));
+			logger.info("Executable : " + String.valueOf(filepath.setExecutable(true, false)));
+			logger.info("Writable : " + String.valueOf(filepath.setWritable(true, false)));
+			logger.info("Readable : " + String.valueOf(filepath.setReadable(true, false)));
 		}
 		logger.info(fileName + ".exe downLoad success");
-		cmd_EXE(fileName, directory, deCompressKey);
+		cmd_EXE(fileName, downloadPath, deCompressKey);
 //		取得檔案的行數
-		File f = new File(directory + fileName);
+		File f = new File(downloadPath + fileName);
 		long fileLength = f.length();
 		LineNumberReader lineNumberReader = new LineNumberReader(new FileReader(f));
 		lineNumberReader.skip(fileLength);
 		ConsoleProgressBar.init(lineNumberReader.getLineNumber());
 		lineNumberReader.close();
 		
-		FileInputStream fileInputStream = new FileInputStream(directory + fileName);
+		FileInputStream fileInputStream = new FileInputStream(downloadPath + fileName);
 		InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "big5");
 		BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 		long time = System.currentTimeMillis();
@@ -105,6 +111,8 @@ public abstract class Auth {
 		logger.info("batchUpdate time : " + (System.currentTimeMillis() - time));
 		bufferedReader.close();
 		ftp.logout();
+		delFile(downloadPath + fileName);
+		delFile(downloadPath + fileName + ".EXE");
 	}
 	
 	public String getWeekDays(Date date) {
@@ -115,6 +123,21 @@ public abstract class Auth {
         if (w < 0)
         	w = 0;
         return weekDays[w];
+	}
+	
+	public void copyFile(FileInputStream source, FileOutputStream desc) throws IOException {
+		FileChannel inputChannel;
+		FileChannel outputChannel;
+		inputChannel = source.getChannel();
+		outputChannel = desc.getChannel();
+		outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
+		inputChannel.close();
+		outputChannel.close();
+	}
+	
+	public void delFile(String FilePathAndName) {
+		File file = new File(FilePathAndName);
+		file.delete();
 	}
 	
 	public abstract void batchUpdate(BufferedReader bufferedReader) throws Exception;

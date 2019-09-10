@@ -50,7 +50,7 @@ public class Authow05 extends Auth {
 //					mode = 1 當日須轉入, mode = 0 當日不須轉入
 					if((Short)map.get("Mode") == 1) {
 						logger.info("工作日---開始執行Authow05授權批次");
-						execute(ftp, authow05Properties.getRemotePath(),authow05Properties.getLocalPath(), authProperties.getDeCompressKey());
+						execute(ftp, authow05Properties.getRemotePath(), authow05Properties.getDownloadPath(), authow05Properties.getBackupPath() ,authProperties.getDeCompressKey());
 						break;
 					}
 					else {
@@ -64,7 +64,7 @@ public class Authow05 extends Auth {
 				done = true;
 				if(!getWeekDays(today).equals("星期六") && !getWeekDays(today).equals("星期日")) {
 					logger.info("未找到類別4，按照預設 (星期一~星期五) 日期執行Authow05授權批次!");
-					execute(ftp, authow05Properties.getRemotePath(),authow05Properties.getLocalPath(), authProperties.getDeCompressKey());
+					execute(ftp, authow05Properties.getRemotePath(), authow05Properties.getDownloadPath(), authow05Properties.getBackupPath() ,authProperties.getDeCompressKey());
 				}
 				else {
 					logger.info("未找到類別4，且不屬於預設 (星期一~星期五) 日期");
