@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConfigurationProperties(prefix = "auth.authpq27")
-@PropertySource(value = { "classpath:authpq27.properties" })
 public class Authpq27Properties {
 	private String remotePath;
 	private String downloadPath;

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 @EnableScheduling
-@PropertySource(value = { "classpath:application.properties" })
 public class Auth_ivr_scheduled {
 	@Autowired
 	private Authow05 authow05;
