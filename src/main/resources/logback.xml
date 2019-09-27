@@ -10,7 +10,7 @@
 	<appender name="AUTH" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- daily rollover -->
-			<FileNamePattern>/opt/jboss/deploy/batch/auth/LOG/auth.log.%d{yyyyMMdd}</FileNamePattern>
+			<FileNamePattern>/opt/jboss/deploy/batch/auth/LOG/auth.%d{yyyyMMdd}.LOG</FileNamePattern>
 			<!-- keep 30 days' worth of history -->
 			<maxHistory>180</maxHistory>
 		</rollingPolicy>
