@@ -82,7 +82,7 @@ public class Authow05 extends Auth {
 	public String getFileName() {
 		long time = System.currentTimeMillis();
 		SimpleDateFormat sdf = new SimpleDateFormat("MMdd");
-		String fileName = "OW05" + sdf.format(new Date(time));
+		String fileName = authow05Properties.getName() + sdf.format(new Date(time));
 		return fileName;
 	}
 	

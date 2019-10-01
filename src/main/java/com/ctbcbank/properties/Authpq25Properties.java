@@ -1,12 +1,12 @@
 package com.ctbcbank.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 @Component
 @ConfigurationProperties(prefix = "auth.authpq25")
 public class Authpq25Properties {
+	private String name;
 	private String remotePath;
 	private String downloadPath;
 	private String backupPath;
@@ -49,6 +49,12 @@ public class Authpq25Properties {
 	}
 	public void setCheckworkdaySql(String checkworkdaySql) {
 		this.checkworkdaySql = checkworkdaySql;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 }

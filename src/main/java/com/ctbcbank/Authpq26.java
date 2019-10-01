@@ -171,7 +171,7 @@ public class Authpq26 extends Auth{
 	public String getFileName() {
 		long time = System.currentTimeMillis();
 		SimpleDateFormat sdf = new SimpleDateFormat("MMdd");
-		String fileName = "PQ26" + sdf.format(new Date(time));
+		String fileName = authpq26Properties.getName() + sdf.format(new Date(time));
 		return fileName;
 	}
 }

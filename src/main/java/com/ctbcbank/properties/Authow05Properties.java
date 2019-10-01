@@ -1,12 +1,12 @@
 package com.ctbcbank.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 @Component
 @ConfigurationProperties(prefix = "auth.authow05")
 public class Authow05Properties{
+	private String name;
 	private String remotePath;
 	private String downloadPath;
 	private String backupPath;
@@ -63,5 +63,11 @@ public class Authow05Properties{
 	}
 	public void setStatusSql(String statusSql) {
 		this.statusSql = statusSql;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
 	}
 }
