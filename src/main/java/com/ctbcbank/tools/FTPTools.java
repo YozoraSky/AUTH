@@ -46,15 +46,13 @@ public class FTPTools {
 	* @param saveFile 本地端檔案路徑 
 	*/
 	public void downloadFile(String directory, String downloadFile, String saveFile) throws Exception{
-		FileOutputStream fout;
-		fout = new FileOutputStream(saveFile);
 		ftpClient.changeWorkingDirectory(directory);
 		if(isExisted(downloadFile)) {
+			FileOutputStream fout = new FileOutputStream(saveFile);
 			ftpClient.retrieveFile(downloadFile, fout);
 			fout.close();
 		}
 		else {
-			fout.close();
 			throw new Exception("file is not found on the ftp server");
 		}
 	}

@@ -56,5 +56,4 @@ public class Authpq25Properties {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
 }

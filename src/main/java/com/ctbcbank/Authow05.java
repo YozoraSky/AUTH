@@ -1,8 +1,6 @@
 package com.ctbcbank;
 
 import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,62 +28,52 @@ public class Authow05 extends Auth {
 	AuthProperties authProperties;
 	@Autowired
 	Authow05Properties authow05Properties;
-	
+
 	@Override
-	public void start() {
-		long currentTime = System.currentTimeMillis();
-		Date today = new Date(currentTime);
+	public void checkForExecution(Date date) throws Exception {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		String password = new String(Base64.getDecoder().decode(authProperties.getPassword()));
 		FTPTools ftp = new FTPTools(authProperties.getHost(), authProperties.getUsername(), password, 21);
-		try {
-			Map<String, Object> params = new HashMap<String, Object>();
-			params.put("SDate", sdf.format(today) + '%');
-			List<Map<String,Object>> list = namedParameterJdbcTemplate.queryForList(authow05Properties.getCheckworkdaySql(), params);
-			boolean done = false;
-			for(Map<String, Object> map : list) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("SDate", sdf.format(date) + '%');
+		List<Map<String, Object>> list = namedParameterJdbcTemplate
+				.queryForList(authow05Properties.getCheckworkdaySql(), params);
+		boolean done = false;
+		for (Map<String, Object> map : list) {
 //				Authow05屬於類別4
-				if((Short)map.get("FileType") == 4) {
-					done = true;
-//					mode = 1 當日須轉入, mode = 0 當日不須轉入
-					if((Short)map.get("Mode") == 1) {
-						logger.info("工作日---開始執行Authow05授權批次");
-						execute(ftp, authow05Properties.getRemotePath(), authow05Properties.getDownloadPath(), authow05Properties.getBackupPath() ,authProperties.getDeCompressKey());
-						break;
-					}
-					else {
-						logger.info("休假日");
-						break;
-					}
-				}
-			}
-//			若當天找不到類別4，則按照預設日去執行(星期一~星期五要執行，六日不用)
-			if(!done) {
+			if ((Short) map.get("FileType") == 4) {
 				done = true;
-				if(!getWeekDays(today).equals("星期六") && !getWeekDays(today).equals("星期日")) {
-					logger.info("未找到類別4，按照預設 (星期一~星期五) 日期執行Authow05授權批次!");
-					execute(ftp, authow05Properties.getRemotePath(), authow05Properties.getDownloadPath(), authow05Properties.getBackupPath() ,authProperties.getDeCompressKey());
-				}
-				else {
-					logger.info("未找到類別4，且不屬於預設 (星期一~星期五) 日期");
+//					mode = 1 當日須轉入, mode = 0 當日不須轉入
+				if ((Short) map.get("Mode") == 1) {
+					logger.info("工作日---開始執行Authow05授權批次");
+					execute(ftp, authow05Properties.getRemotePath(), authow05Properties.getDownloadPath(),
+							authow05Properties.getBackupPath(), authProperties.getDeCompressKey());
+					break;
+				} else {
+					logger.info("休假日");
+					break;
 				}
 			}
-		} catch (Exception e) {
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			e.printStackTrace(pw);
-			logger.error(sw.toString());
+		}
+//			若當天找不到類別4，則按照預設日去執行(星期一~星期五要執行，六日不用)
+		if (!done) {
+			done = true;
+			if (!getWeekDays(date).equals("星期六") && !getWeekDays(date).equals("星期日")) {
+				logger.info("未找到類別4，按照預設 (星期一~星期五) 日期執行Authow05授權批次!");
+				execute(ftp, authow05Properties.getRemotePath(), authow05Properties.getDownloadPath(),
+						authow05Properties.getBackupPath(), authProperties.getDeCompressKey());
+			} else {
+				logger.info("未找到類別4，且不屬於預設 (星期一~星期五) 日期");
+			}
 		}
 	}
-	
+
 	@Override
-	public String getFileName() {
-		long time = System.currentTimeMillis();
+	public void setFileName(Date date) {
 		SimpleDateFormat sdf = new SimpleDateFormat("MMdd");
-		String fileName = authow05Properties.getName() + sdf.format(new Date(time));
-		return fileName;
+		this.fileName = authow05Properties.getName() + sdf.format(date);
 	}
-	
+
 	@Override
 	public void batchUpdate(BufferedReader bufferedReader) throws Exception {
 		List<MapSqlParameterSource> batchArgsForUpdate = new ArrayList<MapSqlParameterSource>();
@@ -94,40 +82,42 @@ public class Authow05 extends Auth {
 		String line;
 		int insertCount = 0;
 		int updateCount = 0;
-		while((line = bufferedReader.readLine())!=null) {
+		int consoleBarTotalCount = 0;
+		while ((line = bufferedReader.readLine()) != null) {
 			byte[] temp = line.getBytes("big5");
 //			商店類別代碼
-			String rec_type = new String(Arrays.copyOfRange(temp, 0, 1),"big5");
+			String rec_type = new String(Arrays.copyOfRange(temp, 0, 1), "big5");
 //			merch_org + merch_nbr = 商店代碼
-			String merch_org = new String(Arrays.copyOfRange(temp, 1, 4),"big5");
-			String merch_nbr = new String(Arrays.copyOfRange(temp, 4, 14),"big5");
+			String merch_org = new String(Arrays.copyOfRange(temp, 1, 4), "big5");
+			String merch_nbr = new String(Arrays.copyOfRange(temp, 4, 14), "big5");
 //			商店名稱
-			String business_name = new String(Arrays.copyOfRange(temp, 14, 54),"big5");
+			String business_name = new String(Arrays.copyOfRange(temp, 14, 54), "big5");
 //			POS機型1
-			String pos_type_1 = new String(Arrays.copyOfRange(temp, 54, 59),"big5");
+			String pos_type_1 = new String(Arrays.copyOfRange(temp, 54, 59), "big5");
 //			POS機型2
-			String pos_type_2 = new String(Arrays.copyOfRange(temp, 59, 64),"big5");
+			String pos_type_2 = new String(Arrays.copyOfRange(temp, 59, 64), "big5");
 //			EDC機型1
-			String edc_type_1 = new String(Arrays.copyOfRange(temp, 64, 69),"big5");
+			String edc_type_1 = new String(Arrays.copyOfRange(temp, 64, 69), "big5");
 //			EDC機型2
-			String edc_type_2 = new String(Arrays.copyOfRange(temp, 69, 74),"big5");
+			String edc_type_2 = new String(Arrays.copyOfRange(temp, 69, 74), "big5");
 //			統編末四碼
-			String corp_no_4 = new String(Arrays.copyOfRange(temp, 74, 78),"big5");
+			String corp_no_4 = new String(Arrays.copyOfRange(temp, 74, 78), "big5");
 //			商店狀態(是否解約)
-			String status = new String(Arrays.copyOfRange(temp, 78, 79),"big5");
+			String status = new String(Arrays.copyOfRange(temp, 78, 79), "big5");
 //			聯絡電話-區碼
-			String contact_phone_area = new String(Arrays.copyOfRange(temp, 79, 82),"big5");
+			String contact_phone_area = new String(Arrays.copyOfRange(temp, 79, 82), "big5");
 //			聯絡電話
-			String contact_phone_no = new String(Arrays.copyOfRange(temp, 82, 90),"big5");
+			String contact_phone_no = new String(Arrays.copyOfRange(temp, 82, 90), "big5");
 //			聯絡電話-分機
-			String contact_phone_ext = new String(Arrays.copyOfRange(temp, 90, 95),"big5");
+			String contact_phone_ext = new String(Arrays.copyOfRange(temp, 90, 95), "big5");
 //			trvl_flag
-			String trvl_flag = new String(Arrays.copyOfRange(temp, 95, 96),"big5");
+			String trvl_flag = new String(Arrays.copyOfRange(temp, 95, 96), "big5");
 //			主機異動日期
-			String maint_date = new String(Arrays.copyOfRange(temp, 96, 104),"big5");
+			String maint_date = new String(Arrays.copyOfRange(temp, 96, 104), "big5");
 //			String chechSql = authProperties.getAuthow05CheckSql().replace("@MerchantNo", merch_org + merch_nbr);
 			params.put("MerchantNo", merch_org + merch_nbr);
-			List<Map<String, Object>> list = namedParameterJdbcTemplate.queryForList(authow05Properties.getCheckSql(), params);
+			List<Map<String, Object>> list = namedParameterJdbcTemplate.queryForList(authow05Properties.getCheckSql(),
+					params);
 			MapSqlParameterSource parameters = new MapSqlParameterSource();
 			parameters.addValue("StoreName", business_name);
 			parameters.addValue("StoreNo", corp_no_4);
@@ -142,35 +132,42 @@ public class Authow05 extends Auth {
 			parameters.addValue("HostModifyDate", maint_date);
 			parameters.addValue("TRVLFlag", trvl_flag);
 			parameters.addValue("MerchantNo", merch_org + merch_nbr);
-			if(!list.isEmpty()) {
+			if (!list.isEmpty()) {
 				batchArgsForUpdate.add(parameters);
-				while(batchArgsForUpdate.size()>=1000) {
-					namedParameterJdbcTemplate.batchUpdate(authow05Properties.getUpdateSql(), batchArgsForUpdate.toArray(new MapSqlParameterSource[0]));
+				while (batchArgsForUpdate.size() >= 1000) {
+					namedParameterJdbcTemplate.batchUpdate(authow05Properties.getUpdateSql(),
+							batchArgsForUpdate.toArray(new MapSqlParameterSource[0]));
 					updateCount += batchArgsForUpdate.size();
-					ConsoleProgressBar.printConsoleProgressBar(updateCount);
+					consoleBarTotalCount += updateCount;
+					ConsoleProgressBar.printConsoleProgressBar(consoleBarTotalCount);
 					batchArgsForUpdate.clear();
 				}
-			}
-			else {
+			} else {
 				batchArgsForInsert.add(parameters);
-				while(batchArgsForInsert.size()>=1000) {
-					namedParameterJdbcTemplate.batchUpdate(authow05Properties.getInsertSql(), batchArgsForInsert.toArray(new MapSqlParameterSource[0]));
+				while (batchArgsForInsert.size() >= 1000) {
+					namedParameterJdbcTemplate.batchUpdate(authow05Properties.getInsertSql(),
+							batchArgsForInsert.toArray(new MapSqlParameterSource[0]));
 					insertCount += batchArgsForInsert.size();
-					ConsoleProgressBar.printConsoleProgressBar(insertCount);
+					consoleBarTotalCount += insertCount;
+					ConsoleProgressBar.printConsoleProgressBar(consoleBarTotalCount);
 					batchArgsForInsert.clear();
 				}
 			}
 		}
-		if(!batchArgsForUpdate.isEmpty()) {
-			namedParameterJdbcTemplate.batchUpdate(authow05Properties.getUpdateSql(), batchArgsForUpdate.toArray(new MapSqlParameterSource[0]));
+		if (!batchArgsForUpdate.isEmpty()) {
+			namedParameterJdbcTemplate.batchUpdate(authow05Properties.getUpdateSql(),
+					batchArgsForUpdate.toArray(new MapSqlParameterSource[0]));
 			updateCount += batchArgsForUpdate.size();
-			ConsoleProgressBar.printConsoleProgressBar(updateCount);
+			consoleBarTotalCount += updateCount;
+			ConsoleProgressBar.printConsoleProgressBar(consoleBarTotalCount);
 			batchArgsForUpdate.clear();
 		}
-		if(!batchArgsForInsert.isEmpty()) {
-			namedParameterJdbcTemplate.batchUpdate(authow05Properties.getInsertSql(), batchArgsForInsert.toArray(new MapSqlParameterSource[0]));
+		if (!batchArgsForInsert.isEmpty()) {
+			namedParameterJdbcTemplate.batchUpdate(authow05Properties.getInsertSql(),
+					batchArgsForInsert.toArray(new MapSqlParameterSource[0]));
 			insertCount += batchArgsForInsert.size();
-			ConsoleProgressBar.printConsoleProgressBar(insertCount);
+			consoleBarTotalCount += insertCount;
+			ConsoleProgressBar.printConsoleProgressBar(consoleBarTotalCount);
 			batchArgsForInsert.clear();
 		}
 		ConsoleProgressBar.ok();

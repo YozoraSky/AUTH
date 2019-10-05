@@ -11,6 +11,7 @@ import java.io.LineNumberReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -28,7 +29,18 @@ public abstract class Auth {
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	@Autowired
 	protected NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	protected String fileName;
+	
+	public abstract void checkForExecution(Date date) throws Exception;
+	
+	public abstract void batchUpdate(BufferedReader bufferedReader) throws Exception;
 
+	public abstract void setFileName(Date date);
+
+	public String getFileName() {
+		return fileName;
+	}
+	
 	private void cmd_EXE(String fileName, String directory, String deCompressKey) throws Exception {
 		Runtime runtime = Runtime.getRuntime();
 		Process process;
@@ -38,7 +50,7 @@ public abstract class Auth {
 			@Override
 			public void run() {
 				try {
-					BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream(),"big5"));
+					BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream(), "big5"));
 					String line = null;
 					while ((line = in.readLine()) != null) {
 						logger.info(line);
@@ -56,7 +68,7 @@ public abstract class Auth {
 			@Override
 			public void run() {
 				try {
-					BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream(),"big5"));
+					BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream(), "big5"));
 					String line = null;
 					while ((line = err.readLine()) != null) {
 						logger.info(line);
@@ -70,23 +82,25 @@ public abstract class Auth {
 			}
 		}.start();
 		int i = process.waitFor();
-		if(i==0)
+		if (i == 0)
 			logger.info(fileName + ".exe excute success");
 		else
 			logger.info(fileName + ".exe excute fail : " + i);
 	}
 
-	public void execute(FTPTools ftp, String remotePath, String downloadPath, String backupPath, String deCompressKey) throws Exception {
+	public void execute(FTPTools ftp, String remotePath, String downloadPath, String backupPath, String deCompressKey)
+			throws Exception {
 		File downloadPathFile = new File(downloadPath);
 		File backupPathFile = new File(backupPath);
-		if(!downloadPathFile.exists())
+		if (!downloadPathFile.exists())
 			downloadPathFile.mkdirs();
-		if(!backupPathFile.exists())
+		if (!backupPathFile.exists())
 			backupPathFile.mkdirs();
 		String fileName = getFileName();
 		logger.info(ftp.login());
 		ftp.downloadFile(remotePath, fileName + ".EXE", downloadPath + fileName + ".EXE");
-		copyFile(new FileInputStream(downloadPath + fileName + ".EXE"), new FileOutputStream(backupPath + fileName + ".EXE"));
+		copyFile(new FileInputStream(downloadPath + fileName + ".EXE"),
+				new FileOutputStream(backupPath + fileName + ".EXE"));
 		File filepath = new File(downloadPath + fileName + ".EXE");
 		if (filepath.exists()) {
 			logger.info("Executable : " + String.valueOf(filepath.setExecutable(true, false)));
@@ -102,7 +116,7 @@ public abstract class Auth {
 		lineNumberReader.skip(fileLength);
 		ConsoleProgressBar.init(lineNumberReader.getLineNumber());
 		lineNumberReader.close();
-		
+
 		FileInputStream fileInputStream = new FileInputStream(downloadPath + fileName);
 		InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "big5");
 		BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
@@ -114,17 +128,17 @@ public abstract class Auth {
 		delFile(downloadPath + fileName);
 		delFile(downloadPath + fileName + ".EXE");
 	}
-	
+
 	public String getWeekDays(Date date) {
-		String[] weekDays = {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
+		String[] weekDays = { "星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六" };
 		Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        int w = cal.get(Calendar.DAY_OF_WEEK) - 1;
-        if (w < 0)
-        	w = 0;
-        return weekDays[w];
+		cal.setTime(date);
+		int w = cal.get(Calendar.DAY_OF_WEEK) - 1;
+		if (w < 0)
+			w = 0;
+		return weekDays[w];
 	}
-	
+
 	public void copyFile(FileInputStream source, FileOutputStream desc) throws IOException {
 		FileChannel inputChannel;
 		FileChannel outputChannel;
@@ -134,15 +148,38 @@ public abstract class Auth {
 		inputChannel.close();
 		outputChannel.close();
 	}
-	
+
 	public void delFile(String FilePathAndName) {
 		File file = new File(FilePathAndName);
 		file.delete();
 	}
-	
-	public abstract void batchUpdate(BufferedReader bufferedReader) throws Exception;
 
-	public abstract String getFileName();
-	
-	public abstract void start();
+	public void start() {
+		try {
+			long currentTime = System.currentTimeMillis();
+			Date date = new Date(currentTime);
+			setFileName(date);
+			checkForExecution(date);
+		} catch (Exception e) {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			logger.error(sw.toString());
+		}
+	}
+
+	public void start(String d) {
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			long millionSeconds = sdf.parse(d).getTime();// 毫秒
+			Date date = new Date(millionSeconds);
+			setFileName(date);
+			checkForExecution(date);
+		} catch (Exception e) {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			logger.error(sw.toString());
+		}
+	}
 }

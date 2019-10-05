@@ -1,8 +1,6 @@
 package com.ctbcbank;
 
 import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,60 +22,52 @@ import com.ctbcbank.tools.ConsoleProgressBar;
 import com.ctbcbank.tools.FTPTools;
 
 @Component
-public class Authpq26 extends Auth{
+public class Authpq26 extends Auth {
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	@Autowired
 	AuthProperties authProperties;
 	@Autowired
 	Authpq26Properties authpq26Properties;
-	
+
 	@Override
-	public void start() {
-		long currentTime = System.currentTimeMillis();
-		Date today = new Date(currentTime);
+	public void checkForExecution(Date date) throws Exception {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		String password = new String(Base64.getDecoder().decode(authProperties.getPassword()));
 		FTPTools ftp = new FTPTools(authProperties.getHost(), authProperties.getUsername(), password, 21);
-		try {
-			Map<String, Object> params = new HashMap<String, Object>();
-			params.put("SDate", sdf.format(today) + '%');
-			List<Map<String,Object>> list = namedParameterJdbcTemplate.queryForList(authpq26Properties.getCheckworkdaySql(), params);
-			boolean done = false;
-			for(Map<String, Object> map : list) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("SDate", sdf.format(date) + '%');
+		List<Map<String, Object>> list = namedParameterJdbcTemplate
+				.queryForList(authpq26Properties.getCheckworkdaySql(), params);
+		boolean done = false;
+		for (Map<String, Object> map : list) {
 //				Authpq26屬於類別0
-				if((Short)map.get("FileType") == 0) {
-					done = true;
-//					mode = 1 當日須轉入, mode = 0 當日不須轉入
-					if((Short)map.get("Mode") == 1) {
-						logger.info("工作日---Authpq26授權批次");
-						execute(ftp, authpq26Properties.getRemotePath(), authpq26Properties.getDownloadPath(), authpq26Properties.getBackupPath(), authProperties.getDeCompressKey());
-						break;
-					}
-					else {
-						logger.info("休假日");
-						break;
-					}
-				}
-			}
-//			若當天找不到類別0，則按照預設日去執行(星期一~星期五要執行，六日不用)
-			if(!done) {
+			if ((Short) map.get("FileType") == 0) {
 				done = true;
-				if(!getWeekDays(today).equals("星期六") && !getWeekDays(today).equals("星期日")) {
-					logger.info("未找到類別0，按照預設 (星期一~星期五) 日期執行Authpq26授權批次");
-					execute(ftp, authpq26Properties.getRemotePath(), authpq26Properties.getDownloadPath(), authpq26Properties.getBackupPath(), authProperties.getDeCompressKey());
-				}
-				else {
-					logger.info("未找到類別0，且不屬於預設 (星期一~星期五) 日期");
+//					mode = 1 當日須轉入, mode = 0 當日不須轉入
+				if ((Short) map.get("Mode") == 1) {
+					logger.info("工作日---Authpq26授權批次");
+					execute(ftp, authpq26Properties.getRemotePath(), authpq26Properties.getDownloadPath(),
+							authpq26Properties.getBackupPath(), authProperties.getDeCompressKey());
+					break;
+				} else {
+					logger.info("休假日");
+					break;
 				}
 			}
-		} catch (Exception e) {
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			e.printStackTrace(pw);
-			logger.error(sw.toString());
+		}
+//			若當天找不到類別0，則按照預設日去執行(星期一~星期五要執行，六日不用)
+		if (!done) {
+			done = true;
+			if (!getWeekDays(date).equals("星期六") && !getWeekDays(date).equals("星期日")) {
+				logger.info("未找到類別0，按照預設 (星期一~星期五) 日期執行Authpq26授權批次");
+				execute(ftp, authpq26Properties.getRemotePath(), authpq26Properties.getDownloadPath(),
+						authpq26Properties.getBackupPath(), authProperties.getDeCompressKey());
+			} else {
+				logger.info("未找到類別0，且不屬於預設 (星期一~星期五) 日期");
+			}
 		}
 	}
-	
+
 	@Override
 	public void batchUpdate(BufferedReader bufferedReader) throws Exception {
 		List<MapSqlParameterSource> batchArgsForInsert = new ArrayList<MapSqlParameterSource>();
@@ -147,31 +137,31 @@ public class Authpq26 extends Auth{
 			parameters.addValue("BatchFile", getFileName());
 			batchArgsForInsert.add(parameters);
 			while (batchArgsForInsert.size() >= 1000) {
-				namedParameterJdbcTemplate.batchUpdate(authpq26Properties.getInsertSql(),batchArgsForInsert.toArray(new MapSqlParameterSource[0]));
+				namedParameterJdbcTemplate.batchUpdate(authpq26Properties.getInsertSql(),
+						batchArgsForInsert.toArray(new MapSqlParameterSource[0]));
 				insertCount += batchArgsForInsert.size();
 				ConsoleProgressBar.printConsoleProgressBar(insertCount);
 				batchArgsForInsert.clear();
 			}
 		}
-		if(!batchArgsForInsert.isEmpty()) {
-			namedParameterJdbcTemplate.batchUpdate(authpq26Properties.getInsertSql(), batchArgsForInsert.toArray(new MapSqlParameterSource[0]));
+		if (!batchArgsForInsert.isEmpty()) {
+			namedParameterJdbcTemplate.batchUpdate(authpq26Properties.getInsertSql(),
+					batchArgsForInsert.toArray(new MapSqlParameterSource[0]));
 			insertCount += batchArgsForInsert.size();
 			ConsoleProgressBar.printConsoleProgressBar(insertCount);
 			batchArgsForInsert.clear();
 		}
 		ConsoleProgressBar.ok();
-		logger.info("Authpq26 insert count : " + insertCount);
+		logger.info("Authpq26 insert count : {}", insertCount);
 		params.put("FilePath", getFileName());
 		params.put("SuccessCount", insertCount);
 		params.put("FailCount", "0");
 		namedParameterJdbcTemplate.update(authpq26Properties.getStatusSql(), params);
 	}
-	
+
 	@Override
-	public String getFileName() {
-		long time = System.currentTimeMillis();
+	public void setFileName(Date date) {
 		SimpleDateFormat sdf = new SimpleDateFormat("MMdd");
-		String fileName = authpq26Properties.getName() + sdf.format(new Date(time));
-		return fileName;
+		this.fileName = authpq26Properties.getName() + sdf.format(date);
 	}
 }
