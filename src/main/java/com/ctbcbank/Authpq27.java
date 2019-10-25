@@ -29,6 +29,7 @@ public class Authpq27 extends Auth {
 	@Autowired
 	Authpq27Properties authpq27Properties;
 
+//	根據FileType和mode和日期，判斷是否要更新該授權批次資料進資料庫。詳細要求請參照規格書
 	@Override
 	public void checkForExecution(Date date) throws Exception {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -68,6 +69,7 @@ public class Authpq27 extends Auth {
 		}
 	}
 
+//	PQ27程式邏輯。詳細請參照規格書
 	@Override
 	public void batchUpdate(BufferedReader bufferedReader) throws Exception {
 		List<MapSqlParameterSource> batchArgsForInsert = new ArrayList<MapSqlParameterSource>();
@@ -168,6 +170,7 @@ public class Authpq27 extends Auth {
 		namedParameterJdbcTemplate.update(authpq27Properties.getStatusSql(), params);
 	}
 
+//	依照給定日期，產生檔名
 	@Override
 	public void setFileName(Date date) {
 		SimpleDateFormat sdf = new SimpleDateFormat("MMdd");

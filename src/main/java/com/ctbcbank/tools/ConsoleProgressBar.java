@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 public class ConsoleProgressBar {
 	private static Logger logger = LoggerFactory.getLogger("consoleBar");
 	private static String start = "% [                    ]";
+//	為檔案的總行數
 	private static int max;
+//	檔案執行進度的行數
 	private static int min;
 	private static int precentDigit = 3;
 	
@@ -17,6 +19,7 @@ public class ConsoleProgressBar {
 		System.out.print("  0" + start);
 	}
 	
+//	印出目前的進度條
 	public static void printConsoleProgressBar(int currentLines) {
 		int maxGrid = start.subSequence(start.indexOf("[")+1, start.indexOf("]")).length();
 		for(int i=0;i<start.length()+precentDigit;i++) {

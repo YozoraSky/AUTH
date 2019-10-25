@@ -41,6 +41,7 @@ public abstract class Auth {
 		return fileName;
 	}
 	
+//	執行從Ftp Server抓下來的exe檔案。並獲得其中的文件檔
 	private void cmd_EXE(String fileName, String directory, String deCompressKey) throws Exception {
 		Runtime runtime = Runtime.getRuntime();
 		Process process;
@@ -109,7 +110,7 @@ public abstract class Auth {
 		}
 		logger.info(fileName + ".exe downLoad success");
 		cmd_EXE(fileName, downloadPath, deCompressKey);
-//		取得檔案的行數
+//		取得檔案的總行數
 		File f = new File(downloadPath + fileName);
 		long fileLength = f.length();
 		LineNumberReader lineNumberReader = new LineNumberReader(new FileReader(f));
@@ -129,6 +130,7 @@ public abstract class Auth {
 		delFile(downloadPath + fileName + ".EXE");
 	}
 
+//	依照給定日期，判斷是星期幾
 	public String getWeekDays(Date date) {
 		String[] weekDays = { "星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六" };
 		Calendar cal = Calendar.getInstance();
@@ -139,6 +141,7 @@ public abstract class Auth {
 		return weekDays[w];
 	}
 
+//	複製檔案
 	public void copyFile(FileInputStream source, FileOutputStream desc) throws IOException {
 		FileChannel inputChannel;
 		FileChannel outputChannel;
@@ -149,11 +152,13 @@ public abstract class Auth {
 		outputChannel.close();
 	}
 
+//	根據檔名刪除檔案
 	public void delFile(String FilePathAndName) {
 		File file = new File(FilePathAndName);
 		file.delete();
 	}
 
+//	批次授權程式的起點(日期為當天時間)
 	public void start() {
 		try {
 			long currentTime = System.currentTimeMillis();
@@ -168,6 +173,7 @@ public abstract class Auth {
 		}
 	}
 
+//	批次授權程式的起點(可以輸入指定日期)
 	public void start(String d) {
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

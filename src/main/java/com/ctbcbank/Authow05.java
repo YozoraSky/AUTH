@@ -29,6 +29,7 @@ public class Authow05 extends Auth {
 	@Autowired
 	Authow05Properties authow05Properties;
 
+//	根據FileType和mode和日期，判斷是否要更新該授權批次資料進資料庫。詳細要求請參照規格書
 	@Override
 	public void checkForExecution(Date date) throws Exception {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -68,12 +69,7 @@ public class Authow05 extends Auth {
 		}
 	}
 
-	@Override
-	public void setFileName(Date date) {
-		SimpleDateFormat sdf = new SimpleDateFormat("MMdd");
-		this.fileName = authow05Properties.getName() + sdf.format(date);
-	}
-
+//	授權主檔程式邏輯。詳細請參照規格書
 	@Override
 	public void batchUpdate(BufferedReader bufferedReader) throws Exception {
 		List<MapSqlParameterSource> batchArgsForUpdate = new ArrayList<MapSqlParameterSource>();
@@ -178,5 +174,12 @@ public class Authow05 extends Auth {
 		params.put("SuccessCount", updateCount + insertCount);
 		params.put("FailCount", "0");
 		namedParameterJdbcTemplate.update(authow05Properties.getStatusSql(), params);
+	}
+	
+//	依照給定日期，產生檔名
+	@Override
+	public void setFileName(Date date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("MMdd");
+		this.fileName = authow05Properties.getName() + sdf.format(date);
 	}
 }
